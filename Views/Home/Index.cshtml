@@ -1,0 +1,39 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Product Statistics Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 rounded-3 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-4">
+                        <i class="bi bi-box text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="text-primary mb-3">Product Number</h5>
+                    <h2 class="display-4 fw-bold">@ViewData["ProductCount"]</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Statistics Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 rounded-3 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-4">
+                        <i class="bi bi-cart text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="text-primary mb-3">Order Number</h5>
+                    <h2 class="display-4 fw-bold">@ViewData["OrderCount"]</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Add any dashboard-specific JavaScript here
+    </script>
+}

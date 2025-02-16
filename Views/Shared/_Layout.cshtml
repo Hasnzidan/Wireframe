@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Wireframe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/custom.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Wireframe.styles.css" asp-append-version="true" />
+</head>
+<body>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="d-flex">
+            <!-- Left Navigation -->
+            <div class="bg-primary text-white" style="width: 200px; min-height: 100vh;">
+                <div class="p-3">
+                    <h3 class="text-white mb-4">LOGO</h3>
+                    <nav class="nav flex-column">
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")" 
+                           asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-house-door"></i> Home
+                        </a>
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Product" ? "active" : "")" 
+                           asp-controller="Product" asp-action="Index">
+                            <i class="bi bi-box"></i> Products
+                        </a>
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Order" ? "active" : "")" 
+                           asp-controller="Order" asp-action="Index">
+                            <i class="bi bi-cart"></i> Orders
+                        </a>
+                        <a class="nav-link text-white" href="javascript:document.getElementById('logoutForm').submit()">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-grow-1">
+                <!-- Header -->
+                <header class="bg-white shadow-sm">
+                    <div class="container-fluid py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+                            <div class="d-flex align-items-center">
+                                <span class="me-3">Welcome, @User.Identity?.Name!</span>
+                                <a href="mailto:support@example.com" class="text-decoration-none">
+                                    <i class="bi bi-envelope"></i> Email
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Main Content Area -->
+                <main class="container-fluid py-4">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+    }
+    else
+    {
+        <main class="container py-4">
+            @RenderBody()
+        </main>
+    }
+
+    <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post" class="d-none">
+    </form>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

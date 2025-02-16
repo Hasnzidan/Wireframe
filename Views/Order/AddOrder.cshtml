@@ -1,0 +1,206 @@
+@model Wireframe.Models.Order
+
+<div class="container">
+    <h2 class="text-primary mb-4">Add New Order</h2>
+
+    <div id="orderForm">
+        <div class="mb-3">
+            <label for="customerName" class="form-label">Customer Name</label>
+            <input type="text" class="form-control" id="customerName" required />
+        </div>
+
+        <div class="row mb-3">
+            <div class="col">
+                <label class="form-label">Product</label>
+                <select class="form-select" id="productSelect">
+                    <option value="">Select a product</option>
+                    @foreach (var product in ViewBag.Products)
+                    {
+                        <option value="@product.Id" data-price="@product.price">@product.Name</option>
+                    }
+                </select>
+            </div>
+            
+            <div class="col">
+                <label class="form-label">Price</label>
+                <input type="number" class="form-control" id="price" readonly />
+            </div>
+
+            <div class="col">
+                <label class="form-label">Quantity</label>
+                <input type="number" class="form-control" id="quantity" value="1" min="1" />
+            </div>
+
+            <div class="col-auto d-flex align-items-end">
+                <button type="button" class="btn btn-primary" id="addItem">
+                    <i class="bi bi-plus"></i> Add
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive mb-4">
+            <table class="table" id="orderTable">
+                <thead class="bg-primary text-white">
+                    <tr>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                        <td id="grandTotal">0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="text-center">
+            <button type="button" class="btn btn-primary px-4" id="saveOrder">
+                <i class="bi bi-save"></i> Save Order
+            </button>
+            <a asp-action="Index" class="btn btn-secondary px-4 ms-2">
+                <i class="bi bi-x"></i> Cancel
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let rowCount = 0;
+            let orderItems = [];
+            
+            // Update price when product is selected
+            $("#productSelect").change(function() {
+                const selectedOption = $(this).find("option:selected");
+                const price = selectedOption.data("price");
+                $("#price").val(price || "");
+            });
+
+            // Add item to order
+            $("#addItem").click(function() {
+                const productSelect = $("#productSelect");
+                const selectedOption = productSelect.find("option:selected");
+                
+                if (!selectedOption.val()) {
+                    alert("Please select a product");
+                    return;
+                }
+
+                const productId = selectedOption.val();
+                const productName = selectedOption.text();
+                const price = parseFloat($("#price").val());
+                const quantity = parseInt($("#quantity").val());
+                
+                if (!quantity || quantity < 1) {
+                    alert("Please enter a valid quantity");
+                    return;
+                }
+
+                const total = price * quantity;
+                rowCount++;
+                
+                const item = {
+                    productId: productId,
+                    productName: productName,
+                    price: price,
+                    quantity: quantity
+                };
+                
+                orderItems.push(item);
+                
+                const newRow = `
+                    <tr data-index="${orderItems.length - 1}">
+                        <td>${rowCount}</td>
+                        <td>${productName}</td>
+                        <td>${price.toFixed(2)}</td>
+                        <td>${quantity}</td>
+                        <td>${total.toFixed(2)}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-btn">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                
+                $("#orderTable tbody").append(newRow);
+                updateGrandTotal();
+                
+                // Reset form
+                productSelect.val("");
+                $("#price").val("");
+                $("#quantity").val("1");
+            });
+            
+            // Delete item from order
+            $(document).on("click", ".delete-btn", function() {
+                const row = $(this).closest("tr");
+                const index = row.data("index");
+                orderItems.splice(index, 1);
+                row.remove();
+                updateGrandTotal();
+                
+                // Update remaining row indices
+                $("#orderTable tbody tr").each(function(idx) {
+                    $(this).attr("data-index", idx);
+                    $(this).find("td:first").text(idx + 1);
+                });
+                rowCount--;
+            });
+            
+            // Calculate grand total
+            function updateGrandTotal() {
+                const grandTotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                $("#grandTotal").text(grandTotal.toFixed(2));
+            }
+            
+            // Save order
+            $("#saveOrder").click(function() {
+                const customerName = $("#customerName").val();
+                
+                if (!customerName) {
+                    alert("Please enter customer name");
+                    return;
+                }
+                
+                if (orderItems.length === 0) {
+                    alert("Please add at least one item to the order");
+                    return;
+                }
+                
+                const order = {
+                    customerName: customerName,
+                    items: orderItems
+                };
+                
+                $.ajax({
+                    url: '@Url.Action("AddOrder")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(order),
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            window.location.href = '@Url.Action("Index")';
+                        } else {
+                            alert(response.message || "Failed to create order");
+                        }
+                    },
+                    error: function() {
+                        alert("An error occurred while saving the order");
+                    }
+                });
+            });
+        });
+    </script>
+}
