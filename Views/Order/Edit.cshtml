@@ -1,0 +1,209 @@
+@model Wireframe.Controllers.OrderViewModel
+
+@{
+    ViewData["Title"] = "Edit Order";
+    var products = ViewBag.Products as List<Wireframe.Models.Product>;
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Edit Order</h6>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="CustomerName" class="control-label">Customer Name</label>
+                            <input asp-for="CustomerName" class="form-control" />
+                            <span asp-validation-for="CustomerName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="OrderDate" class="control-label">Order Date</label>
+                            <input asp-for="OrderDate" class="form-control" type="date" />
+                            <span asp-validation-for="OrderDate" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Order Items</h6>
+                            <button type="button" class="btn btn-primary btn-sm" id="addItem">
+                                <i class="bi bi-plus-circle"></i> Add Item
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="orderItems">
+                            @for (int i = 0; i < Model.Items.Count; i++)
+                            {
+                                <div class="order-item mb-3">
+                                    <input type="hidden" name="Items[@i].Id" value="@Model.Items[i].Id" />
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Product</label>
+                                                <select name="Items[@i].ProductId" class="form-control product-select" data-index="@i">
+                                                    <option value="">Select Product</option>
+                                                    @foreach (var product in products)
+                                                    {
+                                                        var selected = Model.Items[i].ProductId == product.Id;
+                                                        <option value="@product.Id" 
+                                                                data-price="@product.price"
+                                                                data-name="@product.Name"
+                                                                selected="@selected">
+                                                            @product.Name
+                                                        </option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>Price</label>
+                                                <input type="number" name="Items[@i].Price" value="@Model.Items[i].Price" class="form-control price-input" step="0.01" readonly />
+                                                <input type="hidden" name="Items[@i].ProductName" value="@Model.Items[i].ProductName" class="product-name-input" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>Quantity</label>
+                                                <input type="number" name="Items[@i].Quantity" value="@Model.Items[i].Quantity" class="form-control quantity-input" min="1" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Total</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control item-total" readonly value="@(Model.Items[i].Price * Model.Items[i].Quantity)" />
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-danger remove-item">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-end">
+                            <div class="h5">
+                                Total: $<span id="orderTotal">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function () {
+            updateOrderTotal();
+
+            $('#addItem').click(function () {
+                var index = $('.order-item').length;
+                var template = `
+                    <div class="order-item mb-3">
+                        <input type="hidden" name="Items[${index}].Id" value="0" />
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Product</label>
+                                    <select name="Items[${index}].ProductId" class="form-control product-select" data-index="${index}">
+                                        <option value="">Select Product</option>
+                                        @foreach (var product in products)
+                                        {
+                                            <option value="@product.Id" data-price="@product.price" data-name="@product.Name">@product.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Price</label>
+                                    <input type="number" name="Items[${index}].Price" class="form-control price-input" step="0.01" readonly />
+                                    <input type="hidden" name="Items[${index}].ProductName" class="product-name-input" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Quantity</label>
+                                    <input type="number" name="Items[${index}].Quantity" class="form-control quantity-input" value="1" min="1" />
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Total</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control item-total" readonly />
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-danger remove-item">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#orderItems').append(template);
+            });
+
+            $(document).on('change', '.product-select', function () {
+                var selectedOption = $(this).find('option:selected');
+                var price = selectedOption.data('price');
+                var name = selectedOption.data('name');
+                var row = $(this).closest('.order-item');
+                row.find('.price-input').val(price);
+                row.find('.product-name-input').val(name);
+                updateItemTotal(row);
+            });
+
+            $(document).on('input', '.quantity-input', function () {
+                updateItemTotal($(this).closest('.order-item'));
+            });
+
+            $(document).on('click', '.remove-item', function () {
+                $(this).closest('.order-item').remove();
+                updateOrderTotal();
+            });
+
+            function updateItemTotal(row) {
+                var price = parseFloat(row.find('.price-input').val()) || 0;
+                var quantity = parseInt(row.find('.quantity-input').val()) || 0;
+                var total = price * quantity;
+                row.find('.item-total').val(total.toFixed(2));
+                updateOrderTotal();
+            }
+
+            function updateOrderTotal() {
+                var total = 0;
+                $('.item-total').each(function () {
+                    total += parseFloat($(this).val()) || 0;
+                });
+                $('#orderTotal').text(total.toFixed(2));
+            }
+        });
+    </script>
+}

@@ -36,21 +36,32 @@ namespace Wireframe.Services
 
         public async Task<Order> CreateOrderAsync(Order order, List<OrderItem> items)
         {
-            order.OrderDate = DateOnly.FromDateTime(DateTime.Now);
-            order.Total = items.Sum(i => i.Price * i.Quantity);
-
-            await _context.Orders.AddAsync(order);
-            await _context.SaveChangesAsync();
-
-            foreach (var item in items)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                item.OrderId = order.Id;
+                order.OrderDate = DateOnly.FromDateTime(DateTime.Now);
+                order.Total = items.Sum(i => i.Price * i.Quantity);
+
+                await _context.Orders.AddAsync(order);
+                await _context.SaveChangesAsync();
+
+                foreach (var item in items)
+                {
+                    item.OrderId = order.Id;
+                    item.Order = order;
+                }
+
+                await _context.OrderItems.AddRangeAsync(items);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return order;
             }
-
-            await _context.OrderItems.AddRangeAsync(items);
-            await _context.SaveChangesAsync();
-
-            return order;
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<bool> UpdateOrderAsync(Order order)

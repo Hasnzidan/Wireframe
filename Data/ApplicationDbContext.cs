@@ -19,20 +19,29 @@ namespace Wireframe.Data
         {
             base.OnModelCreating(builder);
 
+            // Configure Order
             builder.Entity<Order>()
                 .Property(o => o.Total)
                 .HasPrecision(18, 2);
 
+            builder.Entity<Order>()
+                .HasMany(o => o.OrderItems)
+                .WithOne(oi => oi.Order)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure OrderItem
             builder.Entity<OrderItem>()
                 .Property(oi => oi.Price)
                 .HasPrecision(18, 2);
 
             builder.Entity<OrderItem>()
-                .HasOne(oi => oi.Order)
+                .HasOne(oi => oi.Product)
                 .WithMany()
-                .HasForeignKey(oi => oi.OrderId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(oi => oi.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            // Configure Product
             builder.Entity<Product>()
                 .Property(p => p.price)
                 .HasColumnType("decimal(18,2)");

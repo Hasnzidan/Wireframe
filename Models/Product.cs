@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Http;
 
 namespace Wireframe.Models
 {
@@ -13,11 +15,15 @@ namespace Wireframe.Models
         [Required(ErrorMessage = "Price is required")]
         [Range(0, double.MaxValue, ErrorMessage = "Price must be a positive number")]
         [Display(Name = "Price")]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal price { get; set; }
 
         [Display(Name = "Product Image")]
         public string Imgurl { get; set; }
 
         public DateOnly Date { get; set; }
+
+        [NotMapped]
+        public IFormFile? ImageFile { get; set; }
     }
 }
